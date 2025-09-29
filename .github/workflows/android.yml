@@ -8,7 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
 
@@ -39,9 +38,8 @@ jobs:
       run: |
         BUILD_TOOL_VERSION=$(ls /usr/local/lib/android/sdk/build-tools/ | tail -n 1)
         echo "BUILD_TOOL_VERSION=$BUILD_TOOL_VERSION" >> $GITHUB_ENV
-        echo "Last build tool version is: $BUILD_TOOL_VERSION"
 
-    - name: Sign APK with temporary debug keystore and zipalign
+    - name: Sign APK with temporary debug key
       run: |
         echo "Generating temporary debug keystore..."
         keytool -genkeypair -v \
@@ -59,7 +57,6 @@ jobs:
 
         echo "Signing APK..."
         jarsigner -verbose \
-          -sigalg SHA256withRSA -digestalg SHA-256 \
           -keystore debug.keystore \
           -storepass android \
           -keypass android \
@@ -67,10 +64,10 @@ jobs:
           -signedjar "$APK_SIGNED"
 
         echo "Aligning APK..."
-        /usr/local/lib/android/sdk/build-tools/$BUILD_TOOL_VERSION/zipalign -v -p 4 "$APK_SIGNED" "$APK_ALIGNED"
+        zipalign -v -p 4 "$APK_SIGNED" "$APK_ALIGNED"
 
     - name: Upload built APK
       uses: actions/upload-artifact@v4
       with:
-        name: fcmfix-ci-apk
+        name: release
         path: ${{ github.workspace }}/app/build/outputs/apk/release/fcmfix-ci-${{ env.VERSION_NAME }}.apk

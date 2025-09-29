@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
     - uses: actions/checkout@v3
 
@@ -24,10 +25,23 @@ jobs:
     - name: Retrieve version name
       run: echo VERSION_NAME=$(date "+%Y%m%d")_$(echo ${{ github.event.head_commit.id }} | head -c 7) >> $GITHUB_ENV
 
+    - name: Retrieve version code
+      run: echo VERSION_CODE=$(cat ${{ github.workspace }}/app/build.gradle | grep "versionCode" | grep -Eo "[0-9]+") >> $GITHUB_ENV
+
+    - name: Set version name
+      run: sed -i "s/versionName \".*\"/versionName \"${{ env.VERSION_NAME }}\"/" ${{ github.workspace }}/app/build.gradle
+
     - name: Build with Gradle
       run: ./gradlew assembleRelease
 
-    - name: Sign APK with temporary debug keystore
+    - name: Setup build tool version variable
+      shell: bash
+      run: |
+        BUILD_TOOL_VERSION=$(ls /usr/local/lib/android/sdk/build-tools/ | tail -n 1)
+        echo "BUILD_TOOL_VERSION=$BUILD_TOOL_VERSION" >> $GITHUB_ENV
+        echo "Last build tool version is: $BUILD_TOOL_VERSION"
+
+    - name: Sign APK with temporary debug keystore and zipalign
       run: |
         echo "Generating temporary debug keystore..."
         keytool -genkeypair -v \
@@ -45,8 +59,7 @@ jobs:
 
         echo "Signing APK..."
         jarsigner -verbose \
-          -sigalg SHA256withRSA \
-          -digestalg SHA-256 \
+          -sigalg SHA256withRSA -digestalg SHA-256 \
           -keystore debug.keystore \
           -storepass android \
           -keypass android \
@@ -54,10 +67,10 @@ jobs:
           -signedjar "$APK_SIGNED"
 
         echo "Aligning APK..."
-        zipalign -v -p 4 "$APK_SIGNED" "$APK_ALIGNED"
+        /usr/local/lib/android/sdk/build-tools/$BUILD_TOOL_VERSION/zipalign -v -p 4 "$APK_SIGNED" "$APK_ALIGNED"
 
-    - name: Upload APK artifact
+    - name: Upload built APK
       uses: actions/upload-artifact@v4
       with:
-        name: fcmfix-ci
+        name: fcmfix-ci-apk
         path: ${{ github.workspace }}/app/build/outputs/apk/release/fcmfix-ci-${{ env.VERSION_NAME }}.apk

@@ -1,4 +1,4 @@
-name: Android CI (Simplified)
+name: Android CI
 
 on:
   push:
@@ -8,10 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
-
+    
     - name: Set up JDK 11
       uses: actions/setup-java@v3
       with:
@@ -21,32 +20,42 @@ jobs:
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
-
-    - name: Retrieve version name and code
-      run: |
-        echo VERSION_NAME=$(date "+%Y%m%d")_$(echo ${{ github.event.head_commit.id }} | head -c 7) >> $GITHUB_ENV
-        echo VERSION_CODE=$(cat ${{ github.workspace }}/app/build.gradle | grep "versionCode" | grep -Eo "[0-9]+") >> $GITHUB_ENV
-        sed -i "s/versionName \".*\"/versionName \"${{ env.VERSION_NAME }}\"/" ${{ github.workspace }}/app/build.gradle
+      
+    - name: Retrieve version name
+      run: echo VERSION_NAME=$(date "+%Y%m%d")_$(echo ${{ github.event.head_commit.id }} | head -c 7) >> $GITHUB_ENV
 
     - name: Build with Gradle
       run: ./gradlew assembleRelease
 
-    - name: Setup build tools version
-      shell: bash
-      run: |
-        BUILD_TOOL_VERSION=$(ls /usr/local/lib/android/sdk/build-tools/ | tail -n 1)
-        echo "BUILD_TOOL_VERSION=$BUILD_TOOL_VERSION" >> $GITHUB_ENV
-        echo Last build tool version: $BUILD_TOOL_VERSION
-
-    - name: Sign APK (temporary debug key)
+    - name: Sign APK (temporary debug key + zipalign)
       run: |
         echo "Generating temporary debug keystore..."
-        keytool -genkeypair -v -keystore debug.keystore -alias androiddebugkey -storepass android -keypass android -keyalg RSA -validity 10000 -dname "CN=CI, OU=CI, O=CI, L=CI, ST=CI, C=CI"
-        jarsigner -verbose -keystore debug.keystore -storepass android -keypass android ${{ github.workspace }}/app/build/outputs/apk/release/app-release-unsigned.apk androiddebugkey
-        mv ${{ github.workspace }}/app/build/outputs/apk/release/app-release-unsigned.apk ${{ github.workspace }}/app/build/outputs/apk/release/fcmfix-ci-${{ env.VERSION_NAME }}.apk
+        keytool -genkeypair -v \
+          -keystore debug.keystore \
+          -alias androiddebugkey \
+          -storepass android \
+          -keypass android \
+          -keyalg RSA \
+          -validity 10000 \
+          -dname "CN=CI, OU=CI, O=CI, L=CI, ST=CI, C=CI"
 
-    - name: Upload APK
+        APK_UNSIGNED="${{ github.workspace }}/app/build/outputs/apk/release/app-release-unsigned.apk"
+        APK_SIGNED="${{ github.workspace }}/app/build/outputs/apk/release/app-release-unsigned-signed.apk"
+        APK_ALIGNED="${{ github.workspace }}/app/build/outputs/apk/release/fcmfix-ci-${{ env.VERSION_NAME }}.apk"
+
+        echo "Signing APK..."
+        jarsigner -verbose \
+          -keystore debug.keystore \
+          -storepass android \
+          -keypass android \
+          "$APK_UNSIGNED" androiddebugkey \
+          -signedjar "$APK_SIGNED"
+
+        echo "Aligning APK..."
+        zipalign -v -p 4 "$APK_SIGNED" "$APK_ALIGNED"
+    
+    - name: Upload built apk
       uses: actions/upload-artifact@v4
       with:
-        name: release
+        name: fcmfix-ci
         path: ${{ github.workspace }}/app/build/outputs/apk/release/fcmfix-ci-${{ env.VERSION_NAME }}.apk

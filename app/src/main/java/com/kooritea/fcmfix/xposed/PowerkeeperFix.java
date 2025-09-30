@@ -232,6 +232,7 @@ public class PowerkeeperFix extends XposedModule {
                         teams,
                         telegram,
                         telegramX,
+                        "com.tencent.mm",
                         "com.google.android.gms",
                         "com.google.android.ext.services",
                         "com.miui.hybrid",

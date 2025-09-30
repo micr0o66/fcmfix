@@ -178,7 +178,7 @@ public class PowerkeeperFix extends XposedModule {
         final String extService = "com.google.android.ext.services";
         final String teams = "com.microsoft.teams";   // microsoft teams
         final String telegram = "org.telegram.messenger";     // telegram
-        final String telegramX = "org.thunderdog.challegram";     // telegram x
+        final String telegramX = "tw.nekomimi.nekogram";     // telegram x
         final String qq = "com.tencent.mobileqq";     // qq
         final String wechat = "com.tencent.mm";     // wechat
         //powerkeeper 内置的名单

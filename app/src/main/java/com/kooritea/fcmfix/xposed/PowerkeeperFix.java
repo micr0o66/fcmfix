@@ -176,9 +176,9 @@ public class PowerkeeperFix extends XposedModule {
 
         final String gms = "com.google.android.gms";
         final String extService = "com.google.android.ext.services";
-        final String teams = "com.microsoft.teams";   // microsoft teams
+        //final String teams = "com.microsoft.teams";   // microsoft teams
         final String telegram = "org.telegram.messenger";     // telegram
-        final String telegramX = "org.thunderdog.challegram";     // telegram x
+        //final String telegramX = "org.thunderdog.challegram";     // telegram x
         final String qq = "com.tencent.mobileqq";     // qq
         final String wechat = "com.tencent.mm";     // wechat
         //powerkeeper 内置的名单
@@ -202,21 +202,19 @@ public class PowerkeeperFix extends XposedModule {
         //白名单
         List<String> mDataWhiteList = new ArrayList(
                 Arrays.asList(
-                        teams,
                         telegram,
-                        telegramX,
                         "com.google.android.gms",
                         "com.google.android.ext.services",
                         "com.xiaomi.mibrain.speech",
                         "com.miui.virtualsim",
                         "com.xiaomi.xmsf",
                         "com.xiaomi.account",
-                        "com.tencent.mobileqq",
                         "com.google.android.tts",
                         "com.xiaomi.aiasst.service",
                         "com.sinovoice.voicebook",
                         "com.tencent.mm",
                         "com.tencent.mobileqq",
+                        "tw.nekomimi.nekogram",
                         "com.flyersoft.moonreaderp",
                         "com.wyfc.itingtxt2",
                         "com.gedoor.monkeybook",
@@ -229,14 +227,14 @@ public class PowerkeeperFix extends XposedModule {
                 ));
         List<String> whiteApps = new ArrayList(
                 Arrays.asList(
-                        teams,
                         telegram,
-                        telegramX,
+                        "tw.nekomimi.nekogram",
+                        "com.tencent.mm",
                         "com.google.android.gms",
                         "com.google.android.ext.services",
                         "com.miui.hybrid",
                         "com.miui.player",
-                        "com.miui.systemAdSolution",
+                        //"com.miui.systemAdSolution",
                         "com.miui.weather2"
                 ));
         List<String> musicApp = new ArrayList(
